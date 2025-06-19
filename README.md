@@ -68,4 +68,4 @@ Este software es propiedad privada. No se permite su uso, copia, modificación o
 
 Arturo Piñeiro - arturo.pineiro@mac.com
 
-Link del proyecto: [https://github.com/arturopineiro/business-plan-ia](https://github.com/arturopineiro/business-plan-ia)
+Link del proyecto: [https://github.com/ArturoP5/business-plan-ia-pro](https://github.com/ArturoP5/business-plan-ia-pro)
