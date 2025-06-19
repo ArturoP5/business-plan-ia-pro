@@ -428,7 +428,7 @@ if 'proyeccion_generada' not in st.session_state:
 
 st.set_page_config(
     page_title="Business Plan IA",
-    page_icon="assets/icon_favicon_32.png",
+    page_icon="./assets/icon_favicon_32.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
