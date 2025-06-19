@@ -1,0 +1,9 @@
+# Archivos Python
+*.pyc
+__pycache__/
+venv/
+.env
+*.xlsx
+*.pdf
+.DS_Store
+*.log
