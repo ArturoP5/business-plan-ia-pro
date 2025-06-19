@@ -426,10 +426,9 @@ if 'datos_guardados' not in st.session_state:
 if 'proyeccion_generada' not in st.session_state:
     st.session_state.proyeccion_generada = False
 
-# Configuración de la página
 st.set_page_config(
     page_title="Business Plan IA",
-    page_icon="📊",
+    page_icon="assets/icon_favicon_32.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
