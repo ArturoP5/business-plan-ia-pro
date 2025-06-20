@@ -355,6 +355,7 @@ class ModeloFinanciero:
         pyl = []
         
         for año in range(1, años + 1):
+            print(f"\n=== PROCESANDO AÑO {año} ===")
             # Ingresos
             if año == 1:
                 # Aplicar crecimiento también en el año 1
@@ -381,16 +382,19 @@ class ModeloFinanciero:
 
             # Total otros gastos
             otros_gastos = gastos_generales + gastos_marketing + otros_gastos_calc
-            
+            # Debug de gastos
+            print(f"\n=== DEBUG GASTOS AÑO {año} ===")
+            print(f"Gastos personal inicial: {self.gastos_personal:,.0f}")
+            print(f"Gastos personal ajustado: {gastos_personal:,.0f}")
+            print(f"Gastos generales: {gastos_generales:,.0f}")
+            print(f"Gastos marketing: {gastos_marketing:,.0f}")
+            print(f"Otros gastos calc: {otros_gastos_calc:,.0f}")
+            print(f"Total otros gastos: {otros_gastos:,.0f}")
             # Calcular EBITDA correctamente para todos los años
-            if self.ebitda_real and año == 1:
-                # Año 1: usar EBITDA real si está disponible
-                ebitda = self.ebitda_real
-                margen_ebitda = (ebitda / ingresos * 100) if ingresos > 0 else 0
-            else:
-                # Años 2-5: calcular EBITDA = Ventas - Costos - Gastos
-                ebitda = ingresos - coste_ventas - gastos_personal - otros_gastos
-                margen_ebitda = (ebitda / ingresos * 100) if ingresos > 0 else 0
+            # Calcular EBITDA = Ventas - Costos - Gastos
+            ebitda = ingresos - coste_ventas - gastos_personal - otros_gastos
+            margen_ebitda = (ebitda / ingresos * 100) if ingresos > 0 else 0
+
             
             # Amortizaciones (activo fijo + CAPEX acumulado)
             amortizacion = (self.activo_fijo_inicial + sum([c['importe'] for c in self.plan_capex if c['año'] < año])) / 10
@@ -422,8 +426,11 @@ class ModeloFinanciero:
                 'impuestos': impuestos,
                 'beneficio_neto': beneficio_neto
             })
+        # Debug final antes de crear DataFrame
+        print("\n=== DEBUG PYL FINAL ===")
+        for i, año_data in enumerate(pyl):
         
-        self.pyl = pd.DataFrame(pyl)
+            self.pyl = pd.DataFrame(pyl)
 
     def generar_balance(self, años: int = 5):
         """Genera el balance proyectado"""
