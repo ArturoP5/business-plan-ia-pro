@@ -7,7 +7,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Business Plan IA Pro - Demo",
-    page_icon="https://raw.githubusercontent.com/ArturoP5/business-plan-ia-pro/main/assets/icon_favicon_32.png",
+    page_icon="https://raw.githubusercontent.com/ArturoP5/business-plan-ia-pro/main/assets/icon_favicon_32.ico",
     layout="wide",
     initial_sidebar_state="expanded"
 )
