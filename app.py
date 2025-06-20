@@ -3,14 +3,9 @@ Business Plan IA - Interfaz Web
 Genera proyecciones financieras profesionales para PYMEs
 """
 
-import streamlit as st
 
-st.set_page_config(
-    page_title="ValuProIA",
-    page_icon="assets/icon_favicon_32.ico",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+
+import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
@@ -19,6 +14,76 @@ from utils.pdf_generator import generar_pdf_ejecutivo
 from utils.pdf_generator_pro import generar_pdf_profesional
 from utils.api_data_collector import APIDataCollector
 from utils.excel_handler import crear_plantilla_excel, leer_excel_datos
+
+# AUTENTICACIÓN BÁSICA - Friends & Family Beta
+def check_password():
+    """Returns `True` if the user had the correct password."""
+    
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == st.secrets.get("APP_PASSWORD", "V@luPr0!A#2024"):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("## 🔐 Bienvenido a ValuProIA")
+            st.markdown("*Versión Beta - Acceso Friends & Family*")
+            st.text_input(
+                "Contraseña", 
+                type="password", 
+                on_change=password_entered, 
+                key="password",
+                help="Mínimo 10 caracteres con mayúsculas, minúsculas, números y símbolos"
+            )
+            
+            # Sistema de recuperación
+            with st.expander("¿Olvidaste la contraseña?"):
+                st.info("""
+                📧 **Opciones de recuperación:**
+                
+                1. Contacta directamente:
+                   - Email: arturo.pineiro@mac.com
+                
+                2. Pista: La contraseña incluye:
+                   - El nombre de la app con símbolos
+                   - El año actual
+                   - Símbolos especiales (@, !, #)
+                """)
+        return False
+    
+    elif not st.session_state["password_correct"]:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("## 🔐 Bienvenido a ValuProIA")
+            st.text_input(
+                "Contraseña", 
+                type="password", 
+                on_change=password_entered, 
+                key="password"
+            )
+            st.error("😕 Contraseña incorrecta. Verifica mayúsculas y símbolos.")
+            
+            if st.button("¿Necesitas ayuda?"):
+                st.info("💡 Contacta a arturo.pineiro@mac.com para obtener acceso")
+        return False
+    
+    else:
+        return True
+
+# Verificar contraseña antes de mostrar la app
+if not check_password():
+    st.stop()
+
+st.set_page_config(
+    page_title="ValuProIA",
+    page_icon="assets/icon_favicon_32.ico",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # ==================== FUNCIONES HELPER ====================
 def formato_numero(label, value=0, key=None, decimales=0, help_text=None, min_value=None, max_value=None):
