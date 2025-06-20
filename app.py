@@ -6,8 +6,8 @@ Genera proyecciones financieras profesionales para PYMEs
 import streamlit as st
 
 st.set_page_config(
-    page_title="Business Plan IA Pro - Demo",
-    page_icon="https://raw.githubusercontent.com/ArturoP5/business-plan-ia-pro/main/assets/icon_favicon_32.ico",
+    page_title="ValuProIA",
+    page_icon="assets/icon_favicon_32.ico",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -150,10 +150,10 @@ def mostrar_resumen_ejecutivo_profesional():
     with col6:
         roi = metricas.get('roi_proyectado', 0)
         st.metric("ROI Esperado", f"{roi:.1f}%")
-    
+         
     # RESUMEN DE NEGOCIO
     st.markdown("---")
-    st.markdown("### 📈 **RESUMEN DE NEGOCIO**")
+    st.markdown("### 📈 **RESUMEN DE NEGOCIO**")   
     
     col_neg1, col_neg2 = st.columns(2)
     
@@ -456,11 +456,15 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-st.markdown('<h1 class="main-header">📊 Business Plan IA Pro - Demo</h1>', unsafe_allow_html=True)
+# Logo centrado con mejor distribución
+st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)  # Espaciado superior
+col1, col2, col3 = st.columns([2, 3, 2])  # Cambiar proporciones
+with col2:
+    st.image("assets/ValUProIA.png", use_container_width=True)
+    st.markdown("<h3 style='text-align: center; color: #666; margin-top: 10px;'>Valoración empresarial con metodología M&A e IA</h3>", unsafe_allow_html=True)
+st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)  # Espaciado inferior
 
 # Header principal
-
-st.markdown('<p class="sub-header">Genera proyecciones financieras profesionales en minutos</p>', unsafe_allow_html=True)
 
 
 # Sidebar para entrada de datos
@@ -1297,6 +1301,61 @@ with st.sidebar:
         *Esta provisión se cargará automáticamente en el Pasivo Corriente del Balance*
         """)
 
+    # EQUITY BRIDGE PROFESIONAL
+    st.markdown("---")
+    st.markdown("#### 💰 Análisis Profesional M&A")
+    
+    mostrar_equity_bridge = st.checkbox(
+        "Mostrar Equity Bridge",
+        value=False,
+        help="Análisis profesional para valoración M&A - Del Enterprise Value al Equity Value"
+    )
+    
+    if mostrar_equity_bridge:
+        st.info("""
+        📊 **¿Qué es el Equity Bridge?**
+        
+        Es el 'puente' que muestra cómo se pasa del valor de la empresa (EV) 
+        al valor para los accionistas (Equity), descontando deudas y provisiones.
+        
+        Se mostrará en la pestaña de Valoración.
+        """)
+        
+        # Guardar preferencia
+        st.session_state['mostrar_equity_bridge'] = True
+    else:
+        st.session_state['mostrar_equity_bridge'] = False
+    
+    # Otras provisiones
+    st.markdown("##### 📋 Provisiones adicionales")
+    
+    tiene_litigios = st.checkbox("¿Litigios pendientes?", value=False)
+    if tiene_litigios:
+        provision_litigios = st.number_input(
+            
+            f"Estimación provisión litigios ({get_simbolo_moneda()})",
+            min_value=0,
+            value=0,
+            step=10000,
+            help="Estimación de costes por litigios en curso"
+        )
+        st.session_state['provision_litigios'] = provision_litigios
+    else:
+        st.session_state['provision_litigios'] = 0
+    
+    tiene_contingencias = st.checkbox("¿Contingencias fiscales?", value=False)
+    if tiene_contingencias:
+        provision_fiscal = st.number_input(
+            f"Provisión contingencias fiscales ({get_simbolo_moneda()})",
+            min_value=0,
+            value=0,
+            step=10000,
+            help="Posibles ajustes de inspecciones fiscales"
+        )
+        st.session_state['provision_fiscal'] = provision_fiscal
+    else:
+        st.session_state['provision_fiscal'] = 0
+
     # Parámetros financieros
     st.subheader("Parámetros Financieros")
     
@@ -1763,19 +1822,31 @@ with st.sidebar:
                 )
             with col2:
                 # Calcular valor por defecto de provisiones
-                provision_defecto = st.session_state.get('provision_reestructuracion', 0)
+                # Calcular todas las provisiones
+                provision_reestructuracion = st.session_state.get('provision_reestructuracion', 0)
+                provision_litigios = st.session_state.get('provision_litigios', 0)
+                provision_fiscal = st.session_state.get('provision_fiscal', 0)
+                provision_defecto = provision_reestructuracion + provision_litigios + provision_fiscal
                 
                 provisiones_cp = st.number_input(
                     f"Provisiones a corto plazo ({get_simbolo_moneda()})",
                     min_value=0,
-                    value=default_provisiones_cp if 'default_provisiones_cp' in locals() else int(provision_defecto),
+                    value=int(provision_defecto) if provision_defecto > 0 else (default_provisiones_cp if 'default_provisiones_cp' in locals() else 0),
                     step=10000,
-                    help=f"Incluye: Provisión reestructuración ({get_simbolo_moneda()}{provision_defecto:,.0f}) + otras provisiones < 1 año"
+                    help=f"Total provisiones: Reestructuración ({get_simbolo_moneda()}{provision_reestructuracion:,.0f}) + Litigios ({get_simbolo_moneda()}{provision_litigios:,.0f}) + Fiscal ({get_simbolo_moneda()}{provision_fiscal:,.0f})"
                 )
                 
-                # Mostrar desglose si hay provisión de reestructuración
+                # Mostrar desglose si hay provisiones
                 if provision_defecto > 0:
-                    st.caption(f"📌 Incluye provisión por reestructuración: {get_simbolo_moneda()}{provision_defecto:,.0f}")
+                    desglose_provisiones = []
+                    if provision_reestructuracion > 0:
+                        desglose_provisiones.append(f"Reestructuración: {get_simbolo_moneda()}{provision_reestructuracion:,.0f}")
+                    if provision_litigios > 0:
+                        desglose_provisiones.append(f"Litigios: {get_simbolo_moneda()}{provision_litigios:,.0f}")
+                    if provision_fiscal > 0:
+                        desglose_provisiones.append(f"Fiscal: {get_simbolo_moneda()}{provision_fiscal:,.0f}")
+                    
+                    st.caption(f"📌 Desglose: {' | '.join(desglose_provisiones)}")
 
                 otros_pasivos_cp = st.number_input(
                     f"Otros pasivos corrientes ({get_simbolo_moneda()})",
@@ -2022,12 +2093,21 @@ with st.sidebar:
                     step=50000,
                     help="Beneficios/pérdidas acumuladas no distribuidas"
                 )
-            with col2:
+            with col2: 
+                # Ajustar resultado por provisiones nuevas
+                provision_litigios_nueva = st.session_state.get('provision_litigios', 0)
+                provision_fiscal_nueva = st.session_state.get('provision_fiscal', 0)
+                ajuste_provisiones = provision_litigios_nueva + provision_fiscal_nueva
+                
+                # Calcular resultado ajustado
+                resultado_base = default_resultado_ejercicio if 'default_resultado_ejercicio' in locals() else 0
+                resultado_ajustado = resultado_base - ajuste_provisiones
+
                 resultado_ejercicio = st.number_input(
                     f"Resultado del ejercicio ({get_simbolo_moneda()})",
-                    value=default_resultado_ejercicio if 'default_resultado_ejercicio' in locals() else 0,
+                    value=resultado_ajustado,
                     step=10000,
-                    help="Beneficio/pérdida del año actual (se calculará)"
+                    help=f"Beneficio/pérdida del año actual. Ajustado por provisiones: -{get_simbolo_moneda()}{ajuste_provisiones:,.0f}" if ajuste_provisiones > 0 else "Beneficio/pérdida del año actual"
                 )
                 
         # Otros componentes
@@ -2803,6 +2883,77 @@ if generar_proyeccion:
             due diligence completa, análisis de contratos, y evaluación de activos intangibles.
             """)
         
+        # EQUITY BRIDGE - Solo si el usuario lo activó
+        if st.session_state.get('mostrar_equity_bridge', False):
+            st.markdown("---")
+            
+            # Obtener valores necesarios
+            valor_empresa = valoracion_prof.get('valoracion_final', 0) if 'valoracion_prof' in locals() else 0
+            deuda_neta = valoracion_prof.get('deuda_neta', 0) if 'valoracion_prof' in locals() else 0
+            provision_reest = st.session_state.get('provision_reestructuracion', 0)
+            provision_litigios = st.session_state.get('provision_litigios', 0)
+            provision_fiscal = st.session_state.get('provision_fiscal', 0)
+            
+            with st.expander("💰 **Equity Value Bridge** - Análisis Profesional M&A", expanded=True):
+                col_bridge1, col_bridge2 = st.columns([3, 1])
+                
+                with col_bridge1:
+                    # Cálculos del bridge
+                    equity_value = valor_empresa - deuda_neta
+                    total_provisiones = provision_reest + provision_litigios + provision_fiscal
+                    equity_ajustado = equity_value - total_provisiones
+                    
+                    st.markdown(f"""```
+Enterprise Value (Valor del Negocio):     {get_simbolo_moneda()}{valor_empresa:>15,.0f}
+(-) Deuda Financiera Neta:                {get_simbolo_moneda()}{deuda_neta:>15,.0f}
+{"─" * 65}
+= Equity Value:                           {get_simbolo_moneda()}{equity_value:>15,.0f}
+
+Ajustes debt-like items:
+(-) Provisión Reestructuración:           {get_simbolo_moneda()}{provision_reest:>15,.0f}
+(-) Provisión Litigios:                   {get_simbolo_moneda()}{provision_litigios:>15,.0f}
+(-) Provisión Contingencias Fiscales:     {get_simbolo_moneda()}{provision_fiscal:>15,.0f}
+{"─" * 65}
+= Equity Value Ajustado:                  {get_simbolo_moneda()}{equity_ajustado:>15,.0f}
+```""")
+                    
+                    # Explicación adicional
+                    if total_provisiones > 0:
+                        impacto_porcentual = (total_provisiones / valor_empresa * 100) if valor_empresa > 0 else 0
+                        st.info(f"""
+                        📊 **Impacto de las provisiones**: {impacto_porcentual:.1f}% del Enterprise Value
+                        
+                        En un proceso de M&A real, estas provisiones se negocian como ajustes al precio.
+                        """)
+                
+                with col_bridge2:
+                    # Gráfico de impacto
+                    if valor_empresa > 0:
+                        fig_bridge = go.Figure()
+                        
+                        valores = [valor_empresa, -deuda_neta, -total_provisiones, equity_ajustado]
+                        textos = ['EV', 'Deuda Neta', 'Provisiones', 'Equity Final']
+                        colores = ['blue', 'red', 'orange', 'green']
+                        
+                        fig_bridge.add_trace(go.Waterfall(
+                            x=textos,
+                            y=valores,
+                            text=[f"{get_simbolo_moneda()}{abs(v):,.0f}" for v in valores],
+                            textposition="outside",
+                            connector={"line": {"color": "rgb(63, 63, 63)"}},
+                            decreasing={"marker": {"color": "red"}},
+                            increasing={"marker": {"color": "green"}},
+                            totals={"marker": {"color": "blue"}}
+                        ))
+                        
+                        fig_bridge.update_layout(
+                            title="Bridge to Equity",
+                            height=400,
+                            showlegend=False
+                        )
+                        
+                        st.plotly_chart(fig_bridge, use_container_width=True)
+
         # Realizar valoración
         with st.spinner("Calculando valoración con metodología de banca de inversión..."):
             try:
