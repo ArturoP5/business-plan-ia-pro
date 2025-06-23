@@ -697,6 +697,29 @@ with col2:
     st.image("assets/ValUProIA.png", use_container_width=True)
     st.markdown("<h3 style='text-align: center; color: #666; margin-top: 10px;'>Valoración empresarial con metodología M&A e IA</h3>", unsafe_allow_html=True)
 st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)  # Espaciado inferior
+# Mostrar ejemplo
+with st.expander("📚 Ver ejemplo de uso"):
+    st.markdown("""
+    ### Cómo usar Valoración empresarial con metodología M&A e IA:
+    
+    1. **Información General**: Introduce el nombre y sector de tu empresa
+    2. **Ventas Históricas**: Añade las ventas de los últimos 2-3 años
+    3. **Estructura de Costos**: Define tus costos variables y fijos
+    4. **Parámetros Financieros**: Si tienes deuda, indícalo
+    5. **Genera la Proyección**: Pulsa el botón y obtén tu Business Plan
+    
+    ### Sectores predefinidos:
+    - **Hostelería**: Restaurantes, bares, hoteles (margen ~65%)
+    - **Tecnología**: SaaS, software, apps (margen ~80%)
+    - **Ecommerce**: Tiendas online (margen ~35%)
+    - **Consultoría**: Servicios profesionales (margen ~90%)
+    
+    ### ¿Qué obtendrás?
+    - P&L proyectado a 5 años
+    - Dashboard con métricas clave
+    - Gráficos interactivos
+    - Resumen ejecutivo descargable
+    """)
 
 # Header principal
 
@@ -4068,30 +4091,6 @@ if not generar_proyeccion and st.session_state.proyeccion_generada and st.sessio
 else:
     # Pantalla de bienvenida cuando no hay proyección
     st.info("👈 Introduce los datos de tu empresa en la barra lateral y pulsa **Generar Proyección**")
-
-    # Mostrar ejemplo
-    with st.expander("📚 Ver ejemplo de uso"):
-        st.markdown("""
-        ### Cómo usar Business Plan IA:
-        
-        1. **Información General**: Introduce el nombre y sector de tu empresa
-        2. **Ventas Históricas**: Añade las ventas de los últimos 2-3 años
-        3. **Estructura de Costos**: Define tus costos variables y fijos
-        4. **Parámetros Financieros**: Si tienes deuda, indícalo
-        5. **Genera la Proyección**: Pulsa el botón y obtén tu Business Plan
-        
-        ### Sectores predefinidos:
-        - **Hostelería**: Restaurantes, bares, hoteles (margen ~65%)
-        - **Tecnología**: SaaS, software, apps (margen ~80%)
-        - **Ecommerce**: Tiendas online (margen ~35%)
-        - **Consultoría**: Servicios profesionales (margen ~90%)
-        
-        ### ¿Qué obtendrás?
-        - P&L proyectado a 5 años
-        - Dashboard con métricas clave
-        - Gráficos interactivos
-        - Resumen ejecutivo descargable
-        """)
 
 # Footer
 st.markdown("---")

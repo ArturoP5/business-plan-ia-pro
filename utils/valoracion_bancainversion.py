@@ -4,6 +4,7 @@ Incluye DCF, Múltiplos Comparables y Análisis de Transacciones
 """
 
 import numpy as np
+import numpy_financial as npf
 import pandas as pd
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
@@ -141,6 +142,31 @@ class ValoracionBancaInversion:
         valor_empresa = vp_flujos + vp_valor_terminal
         valor_equity = valor_empresa - datos['deuda_neta']
 
+        # 7. Calcular TIR del proyecto
+        # Estimar inversión inicial basada en métricas del negocio
+        # Método estándar: Inversión = 0.8 x Ventas del primer año proyectado
+        ventas_actuales = datos.get('ventas_actuales', 0)
+        margen_ebitda = fcf_proyectados[0] / ventas_actuales if ventas_actuales > 0 else 0.2
+
+        # Factor de inversión basado en la intensidad de capital del negocio
+        # Empresas con mayor margen necesitan menos capital inicial
+        if margen_ebitda > 0.25:  # Alto margen (servicios, software)
+            factor_inversion = 0.5
+        elif margen_ebitda > 0.15:  # Margen medio (retail, distribución)
+            factor_inversion = 0.8
+        else:  # Bajo margen (industrial, manufactura)
+            factor_inversion = 1.2
+
+        # Inversión inicial = factor x ventas año 1
+        ventas_año1 = ventas_actuales * (1 + datos.get('crecimiento_historico', 10) / 100)
+        inversion_inicial = ventas_año1 * factor_inversion
+
+        print(f"DEBUG TIR - Margen EBITDA: {margen_ebitda:.1%}")
+        print(f"DEBUG TIR - Factor inversión: {factor_inversion}x sobre ventas")
+        print(f"DEBUG TIR - Inversión inicial: €{inversion_inicial:,.0f}")
+
+        tir_proyecto = self.calcular_tir(fcf_proyectados, inversion_inicial)
+
         # DEBUG
         print(f"\n=== DEBUG VALORACIÓN DCF ===")
         print(f"VP Flujos: €{vp_flujos:,.0f}")
@@ -151,8 +177,9 @@ class ValoracionBancaInversion:
         print(f"WACC: {wacc:.2%}")
         print(f"g terminal: {g_terminal:.2%}")
         print(f"FCF proyectados: {fcf_proyectados}")
+        print(f"TIR Proyecto: {tir_proyecto:.2f}%")
         
-        # 7. Análisis de sensibilidad
+        # 8. Análisis de sensibilidad
         sensibilidad = self._sensibilidad_dcf(
             fcf_proyectados, wacc, g_terminal, datos['deuda_neta']
         )
@@ -163,6 +190,7 @@ class ValoracionBancaInversion:
             'wacc': wacc * 100,
             'g_terminal': g_terminal * 100,
             'componentes_wacc': componentes_wacc,
+            'tir': tir_proyecto,
             'sensibilidad': sensibilidad,
             'vp_flujos_explicitos': vp_flujos,
             'vp_valor_terminal': vp_valor_terminal,
@@ -746,6 +774,41 @@ class ValoracionBancaInversion:
         
         return conclusiones
 
+    def calcular_tir(self, flujos_caja: List[float], inversion_inicial: float = 0) -> float:
+        """
+        Calcula la TIR (Tasa Interna de Retorno) del proyecto
+        """
+        try:
+            print(f"\nDEBUG calcular_tir:")
+            print(f"  - Flujos recibidos: {flujos_caja}")
+            print(f"  - Inversión inicial: {inversion_inicial}")
+            
+            # Si hay inversión inicial, añadirla como flujo negativo
+            if inversion_inicial > 0:
+                flujos_tir = [-inversion_inicial] + flujos_caja
+            else:
+                # Asumir que el primer flujo es negativo (inversión)
+                flujos_tir = flujos_caja
+            
+            print(f"  - Flujos para TIR: {flujos_tir}")
+            
+            # Calcular TIR
+            tir = npf.irr(flujos_tir)
+            print(f"  - TIR cruda: {tir}")
+            
+            # Convertir a porcentaje y manejar casos especiales
+            if np.isnan(tir) or np.isinf(tir):
+                print(f"  - TIR es NaN o Inf, devolviendo 0")
+                return 0.0
+            
+            resultado = float(tir * 100)  # Convertir a porcentaje
+            print(f"  - TIR final: {resultado}%")
+            
+            return resultado
+            
+        except Exception as e:
+            print(f"ERROR calculando TIR: {e}")
+            return 0.0
 
 # Funciones de utilidad para integración
 def realizar_valoracion_profesional(modelo_financiero) -> Dict:
