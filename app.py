@@ -1896,7 +1896,7 @@ with st.sidebar:
                 provisiones_cp = st.number_input(
                     f"Provisiones a corto plazo ({get_simbolo_moneda()})",
                     min_value=0,
-                    value=int(provision_defecto) if provision_defecto > 0 else (default_provisiones_cp if 'default_provisiones_cp' in locals() else 0),
+                    value=round(provision_defecto) if provision_defecto > 0 else (default_provisiones_cp if 'default_provisiones_cp' in locals() else 0),
                     step=10000,
                     help=f"Total provisiones: Reestructuración ({get_simbolo_moneda()}{provision_reestructuracion:,.0f}) + Litigios ({get_simbolo_moneda()}{provision_litigios:,.0f}) + Fiscal ({get_simbolo_moneda()}{provision_fiscal:,.0f})"
                 )
@@ -2162,11 +2162,12 @@ with st.sidebar:
                 # Ajustar resultado por provisiones nuevas
                 provision_litigios_nueva = st.session_state.get('provision_litigios', 0)
                 provision_fiscal_nueva = st.session_state.get('provision_fiscal', 0)
-                ajuste_provisiones = provision_litigios_nueva + provision_fiscal_nueva
+                provision_reestructuracion_nueva = st.session_state.get('provision_reestructuracion', 0)
+                ajuste_provisiones = provision_litigios_nueva + provision_fiscal_nueva + provision_reestructuracion_nueva
                 
                 # Calcular resultado ajustado
-                resultado_base = default_resultado_ejercicio if 'default_resultado_ejercicio' in locals() else 0
-                resultado_ajustado = resultado_base - ajuste_provisiones
+                resultado_base = round(default_resultado_ejercicio) if 'default_resultado_ejercicio' in locals() else 0
+                resultado_ajustado = round(resultado_base - ajuste_provisiones)
 
                 resultado_ejercicio = st.number_input(
                     f"Resultado del ejercicio ({get_simbolo_moneda()})",
@@ -2174,7 +2175,18 @@ with st.sidebar:
                     step=10000,
                     help=f"Beneficio/pérdida del año actual. Ajustado por provisiones: -{get_simbolo_moneda()}{ajuste_provisiones:,.0f}" if ajuste_provisiones > 0 else "Beneficio/pérdida del año actual"
                 )
-                
+                # Mostrar desglose si hay ajustes por provisiones
+                if ajuste_provisiones > 0:
+                    desglose_ajustes = []
+                    if provision_reestructuracion_nueva > 0:
+                        desglose_ajustes.append(f"Reestructuración: {get_simbolo_moneda()}{provision_reestructuracion_nueva:,.0f}")
+                    if provision_litigios_nueva > 0:
+                        desglose_ajustes.append(f"Litigios: {get_simbolo_moneda()}{provision_litigios_nueva:,.0f}")
+                    if provision_fiscal_nueva > 0:
+                        desglose_ajustes.append(f"Fiscal: {get_simbolo_moneda()}{provision_fiscal_nueva:,.0f}")
+                    
+                    st.caption(f"📌 Ajuste por provisiones: {' | '.join(desglose_ajustes)}")
+                    
         # Otros componentes
         with st.expander("🔧 OTROS COMPONENTES", expanded=False):
             col1, col2 = st.columns(2)
@@ -2185,6 +2197,7 @@ with st.sidebar:
                     step=10000,
                     help="Ajustes por valoración de instrumentos financieros"
                 )
+
             with col2:
                 subvenciones = st.number_input(
                     f"Subvenciones de capital ({get_simbolo_moneda()})",
