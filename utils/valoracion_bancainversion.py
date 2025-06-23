@@ -143,26 +143,38 @@ class ValoracionBancaInversion:
         valor_equity = valor_empresa - datos['deuda_neta']
 
         # 7. Calcular TIR del proyecto
-        # Estimar inversión inicial basada en métricas del negocio
-        # Método estándar: Inversión = 0.8 x Ventas del primer año proyectado
-        ventas_actuales = datos.get('ventas_actuales', 0)
-        margen_ebitda = fcf_proyectados[0] / ventas_actuales if ventas_actuales > 0 else 0.2
+        # Estimar inversión inicial basada en CAPEX promedio y sector
+        # Método: Promedio del CAPEX con factor según intensidad de capital
+        capex_datos = []
+        for i in range(1, 4):  # Primeros 3 años
+            capex_key = f'capex_año{i}'
+            if capex_key in datos:
+                capex_datos.append(datos[capex_key])
 
-        # Factor de inversión basado en la intensidad de capital del negocio
-        # Empresas con mayor margen necesitan menos capital inicial
-        if margen_ebitda > 0.25:  # Alto margen (servicios, software)
-            factor_inversion = 0.5
-        elif margen_ebitda > 0.15:  # Margen medio (retail, distribución)
-            factor_inversion = 0.8
-        else:  # Bajo margen (industrial, manufactura)
-            factor_inversion = 1.2
+        if capex_datos:
+            capex_promedio = sum(capex_datos) / len(capex_datos)
+            
+            # Factor según intensidad de capital del negocio
+            # Basado en ratio CAPEX/Ventas
+            ventas_actuales = datos.get('ventas_actuales', 1)
+            ratio_capex_ventas = capex_promedio / ventas_actuales if ventas_actuales > 0 else 0.1
+            
+            # Determinar factor según intensidad
+            if ratio_capex_ventas < 0.02:  # Menos del 2% (servicios, software)
+                factor_inversion = 1.5
+            elif ratio_capex_ventas < 0.05:  # 2-5% (retail, distribución)
+                factor_inversion = 2.0
+            else:  # Más del 5% (industrial, manufactura)
+                factor_inversion = 2.5
+            
+            inversion_inicial = capex_promedio * factor_inversion
+        else:
+            # Fallback si no hay datos de CAPEX
+            inversion_inicial = abs(fcf_proyectados[0]) * 1.5 if fcf_proyectados else 0
 
-        # Inversión inicial = factor x ventas año 1
-        ventas_año1 = ventas_actuales * (1 + datos.get('crecimiento_historico', 10) / 100)
-        inversion_inicial = ventas_año1 * factor_inversion
-
-        print(f"DEBUG TIR - Margen EBITDA: {margen_ebitda:.1%}")
-        print(f"DEBUG TIR - Factor inversión: {factor_inversion}x sobre ventas")
+        print(f"DEBUG TIR - CAPEX promedio: €{capex_promedio:,.0f}" if capex_datos else "No hay datos CAPEX")
+        print(f"DEBUG TIR - Ratio CAPEX/Ventas: {ratio_capex_ventas:.1%}" if capex_datos else "")
+        print(f"DEBUG TIR - Factor inversión: {factor_inversion}x" if capex_datos else "")
         print(f"DEBUG TIR - Inversión inicial: €{inversion_inicial:,.0f}")
 
         tir_proyecto = self.calcular_tir(fcf_proyectados, inversion_inicial)
