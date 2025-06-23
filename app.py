@@ -279,7 +279,36 @@ def mostrar_resumen_ejecutivo_profesional():
     
     # 1. INDICADORES DE RENTABILIDAD
     st.markdown("#### 1️⃣ **Rentabilidad** *(¿Qué tan bien gana dinero la empresa?)*")
-    
+    with st.expander("💡 **¿Qué significan estos indicadores de Rentabilidad?**"):
+        st.markdown("""
+        ### 📊 Indicadores de Rentabilidad - Guía para No Financieros
+        
+        **🎯 ROE (Return on Equity - Rentabilidad sobre Capital)**
+        - **¿Qué mide?**: Cuánto gana la empresa por cada € que invirtieron los socios
+        - **Ejemplo**: ROE del 15% = Por cada 100€ invertidos, genera 15€ de beneficio al año
+        - **Benchmark sector**: 10-15% es saludable, >20% es excelente
+        - **🚨 Alerta**: <5% indica baja rentabilidad para los accionistas
+        
+        **📈 Margen EBITDA**
+        - **¿Qué mide?**: De cada 100€ vendidos, cuántos quedan como beneficio operativo
+        - **Ejemplo**: Margen 25% = De 100€ de ventas, 25€ son beneficio operativo
+        - **Benchmark sector**: 
+          - Servicios: 15-25%
+          - Tecnología: 20-35%
+          - Retail: 8-15%
+        - **🚨 Alerta**: <10% puede indicar problemas de eficiencia
+        
+        **💰 Margen Neto**
+        - **¿Qué mide?**: Beneficio final después de TODOS los gastos e impuestos
+        - **Ejemplo**: Margen 10% = De 100€ vendidos, 10€ son beneficio limpio
+        - **Benchmark**: 5-10% es saludable según el sector
+        - **🚨 Alerta**: Negativo significa pérdidas
+        
+        **📊 ¿Cómo interpretarlos juntos?**
+        - **Todos altos**: Empresa muy rentable y eficiente ✅
+        - **EBITDA alto, Neto bajo**: Posibles problemas de deuda o impuestos ⚠️
+        - **ROE bajo con márgenes altos**: Demasiado capital sin usar eficientemente 💡
+        """)
     col_rent1, col_rent2, col_rent3, col_rent4 = st.columns(4)
     
     with col_rent1:
@@ -308,7 +337,47 @@ def mostrar_resumen_ejecutivo_profesional():
     
     # 2. INDICADORES DE LIQUIDEZ
     st.markdown("#### 2️⃣ **Liquidez** *(¿Puede pagar sus deudas a corto plazo?)*")
-    
+    with st.expander("💡 **¿Qué significan estos indicadores de Liquidez?**"):
+        st.markdown("""
+        ### 💧 Indicadores de Liquidez - Guía para No Financieros
+        
+        **🔵 Ratio Corriente (Current Ratio)**
+        - **¿Qué mide?**: Si puede pagar todas sus deudas del próximo año
+        - **Cálculo simple**: Activo Corriente ÷ Pasivo Corriente
+        - **Ejemplo**: Ratio 1.5 = Tiene 1.50€ disponibles por cada 1€ que debe
+        - **Benchmark óptimo**: 
+          - 1.5 - 2.0 → Situación saludable ✅
+          - < 1.0 → Problemas de liquidez 🚨
+          - > 3.0 → Exceso de recursos sin usar 💡
+        
+        **⚡ Prueba Ácida (Quick Ratio)**
+        - **¿Qué mide?**: Capacidad de pago inmediata (sin vender inventario)
+        - **Por qué importa**: El inventario puede tardar meses en convertirse en dinero
+        - **Benchmark**: 
+          - > 1.0 → Excelente liquidez inmediata ✅
+          - 0.8 - 1.0 → Aceptable
+          - < 0.8 → Dependencia del inventario ⚠️
+        
+        **💰 Capital de Trabajo**
+        - **¿Qué es?**: Dinero disponible para las operaciones diarias
+        - **Cálculo**: Activo Corriente - Pasivo Corriente
+        - **Ejemplo positivo**: +500K€ = Colchón financiero para 2-3 meses
+        - **Si es negativo**: La empresa financia operaciones con deuda 🚨
+        
+        **📊 Días de Caja**
+        - **¿Qué mide?**: Cuántos días puede operar con el efectivo actual
+        - **Cálculo**: Efectivo ÷ Gastos diarios
+        - **Benchmark**: 
+          - > 90 días → Muy seguro ✅
+          - 30-90 días → Normal
+          - < 30 días → Riesgo de quedarse sin efectivo ⚠️
+        
+        **💡 Señales de Alerta**:
+        - Ratio corriente cayendo trimestre a trimestre
+        - Capital de trabajo negativo creciente
+        - Días de caja < 30
+        - Prueba ácida < 0.5
+        """)
     col_liq1, col_liq2, col_liq3, col_liq4 = st.columns(4)
     
     with col_liq1:
@@ -335,7 +404,52 @@ def mostrar_resumen_ejecutivo_profesional():
     
     # 3. INDICADORES DE SOLVENCIA Y ENDEUDAMIENTO
     st.markdown("#### 3️⃣ **Solvencia y Endeudamiento** *(¿Cómo se financia?)*")
-    
+    with st.expander("💡 **¿Qué significan estos indicadores de Solvencia y Endeudamiento?**"):
+        st.markdown("""
+        ### 🏦 Indicadores de Solvencia y Endeudamiento - Guía para No Financieros
+        
+        **📊 Ratio de Endeudamiento (Deuda/EBITDA)**
+        - **¿Qué mide?**: Años necesarios para pagar toda la deuda con los beneficios actuales
+        - **Ejemplo**: Ratio 3x = Tardaría 3 años en pagar toda la deuda
+        - **Benchmark por situación**:
+          - < 2x → Endeudamiento bajo, capacidad de inversión ✅
+          - 2x - 3x → Endeudamiento moderado, normal
+          - 3x - 4x → Endeudamiento alto, precaución ⚠️
+          - > 4x → Sobreendeudamiento, riesgo alto 🚨
+        
+        **💼 Ratio Deuda/Patrimonio (D/E)**
+        - **¿Qué mide?**: Cuánto debe la empresa vs. cuánto vale para los socios
+        - **Ejemplo**: D/E = 0.5 = Por cada 1€ de los socios, debe 0.50€
+        - **Benchmark sector**:
+          - < 0.5 → Conservador, mucho margen ✅
+          - 0.5 - 1.0 → Equilibrado
+          - 1.0 - 2.0 → Apalancado (común en inmobiliarias)
+          - > 2.0 → Muy apalancado, mayor riesgo 🚨
+        
+        **🛡️ Cobertura de Intereses (EBITDA/Intereses)**
+        - **¿Qué mide?**: Cuántas veces puede pagar los intereses con sus beneficios
+        - **Ejemplo**: Cobertura 5x = Genera 5€ por cada 1€ de intereses
+        - **Interpretación**:
+          - > 3x → Cómoda capacidad de pago ✅
+          - 2x - 3x → Margen ajustado pero suficiente
+          - 1.5x - 2x → Situación límite ⚠️
+          - < 1.5x → Dificultad para pagar intereses 🚨
+        
+        **🏗️ Ratio de Autonomía Financiera**
+        - **¿Qué mide?**: % del negocio financiado con recursos propios
+        - **Cálculo**: Patrimonio Neto ÷ Total Activo × 100
+        - **Interpretación**:
+          - > 50% → Alta autonomía, bajo riesgo ✅
+          - 30% - 50% → Equilibrio normal
+          - < 30% → Alta dependencia de financiación externa ⚠️
+        
+        **⚠️ Señales de Alerta en Conjunto**:
+        - Deuda/EBITDA > 4x + Cobertura < 2x = Problema grave
+        - D/E creciendo + Márgenes cayendo = Espiral peligrosa
+        - Autonomía < 20% = Vulnerable a crisis de crédito
+        
+        **💡 Consejo**: No es malo tener deuda si genera más rentabilidad que su coste
+        """)
     col_solv1, col_solv2, col_solv3, col_solv4 = st.columns(4)
     
     with col_solv1:
@@ -359,7 +473,62 @@ def mostrar_resumen_ejecutivo_profesional():
     
     # 4. INDICADORES DE EFICIENCIA
     st.markdown("#### 4️⃣ **Eficiencia Operativa** *(¿Qué tan bien usa sus recursos?)*")
-    
+    with st.expander("💡 **¿Qué significan estos indicadores de Eficiencia Operativa?**"):
+        st.markdown("""
+        ### ⚙️ Indicadores de Eficiencia Operativa - Guía para No Financieros
+        
+        **📦 Rotación de Inventario**
+        - **¿Qué mide?**: Cuántas veces al año vende todo su inventario
+        - **Ejemplo**: Rotación 12x = Vende todo el stock cada mes
+        - **Por qué importa**: Inventario parado = dinero muerto
+        - **Benchmark por sector**:
+          - Alimentación: 12-24x (productos frescos) ✅
+          - Tecnología: 6-12x (obsolescencia rápida)
+          - Moda: 4-6x (por temporadas)
+          - Industrial: 2-4x (productos duraderos)
+        - **🚨 Alerta**: Rotación cayendo = acumulación de stock obsoleto
+        
+        **💳 Días de Cobro (DSO - Days Sales Outstanding)**
+        - **¿Qué mide?**: Días que tarda en cobrar a sus clientes
+        - **Ejemplo**: 45 días = Los clientes pagan mes y medio después
+        - **Impacto**: Más días = más dinero "prestado" a clientes
+        - **Benchmark**:
+          - < 30 días → Excelente gestión de cobros ✅
+          - 30-60 días → Normal en B2B
+          - 60-90 días → Revisar política de crédito ⚠️
+          - > 90 días → Riesgo de impagos alto 🚨
+        
+        **📅 Días de Pago (DPO - Days Payables Outstanding)**
+        - **¿Qué mide?**: Días que tarda en pagar a proveedores
+        - **Estrategia**: Equilibrio entre liquidez y relación con proveedores
+        - **Benchmark**:
+          - 30-45 días → Estándar mercado
+          - > 60 días → Puede indicar problemas de caja ⚠️
+          - < 30 días → Quizás pierde descuentos por pronto pago
+        
+        **🔄 Ciclo de Conversión de Efectivo**
+        - **Fórmula**: Días Inventario + Días Cobro - Días Pago
+        - **¿Qué significa?**: Días que el dinero está "atrapado" en operaciones
+        - **Ejemplo**: 30 + 45 - 60 = 15 días
+        - **Objetivo**: Cuanto menor, mejor
+        - **Ideal**: Negativo (cobras antes de pagar) 🎯
+        
+        **📈 Productividad por Empleado**
+        - **¿Qué mide?**: Ventas ÷ Número de empleados
+        - **Benchmark variable por sector**:
+          - Tecnología: >200K€/empleado
+          - Servicios: 80-150K€/empleado
+          - Retail: 150-300K€/empleado
+        
+        **💡 Mejoras Rápidas de Eficiencia**:
+        - Reducir días de cobro → Descuentos por pronto pago
+        - Optimizar inventario → Sistema Just-in-Time
+        - Negociar plazos pago → Sin dañar relación proveedores
+        - Automatizar procesos → Aumentar productividad
+        
+        **⚠️ Señal de Excelencia**: 
+        Ciclo de efectivo negativo = El negocio se autofinancia con proveedores
+        """)
     col_ef1, col_ef2, col_ef3, col_ef4 = st.columns(4)
     
     with col_ef1:
@@ -3141,7 +3310,58 @@ Ajustes debt-like items:
                     
                     with val_tab2:
                         st.subheader("Análisis DCF Detallado")
-                        
+                        with st.expander("💡 **¿Qué es el análisis DCF y cómo interpretarlo?**"):
+                            st.markdown("""
+                            ### 📈 Análisis DCF (Discounted Cash Flow) - Guía para No Financieros
+                            
+                            **🎯 ¿Qué es el DCF?**
+                            El DCF es como calcular cuánto vale un árbol frutal:
+                            - No por la fruta de hoy, sino por TODA la fruta futura
+                            - Considerando que fruta en 5 años vale menos que fruta hoy
+                            - Es el método más usado por inversores profesionales
+                            
+                            **📊 Los 3 Componentes Clave:**
+                            
+                            **1️⃣ Flujos de Caja Libres (FCF)**
+                            - El dinero real que genera el negocio cada año
+                            - Después de pagar todo: empleados, proveedores, impuestos, inversiones
+                            - Es lo que queda para repartir o reinvertir
+                            
+                            **2️⃣ Tasa de Descuento (WACC)**
+                            - Representa el "coste de oportunidad" + riesgo
+                            - Típicamente 8-12% para empresas estables
+                            - Mayor riesgo = Mayor WACC = Menor valoración
+                            - Piénsalo como: "¿Qué rentabilidad mínima exijo por mi dinero?"
+                            
+                            **3️⃣ Valor Terminal**
+                            - El valor de la empresa del año 6 en adelante
+                            - Asume crecimiento estable a perpetuidad
+                            - Suele representar 60-80% del valor total
+                            
+                            **🔍 Cómo Interpretar los Resultados:**
+                            
+                            **Valor Presente de FCF (5 años)**: 
+                            - Si es 40% del total → Empresa madura, predecible ✅
+                            - Si es 20% del total → Empresa en crecimiento, más arriesgada ⚠️
+                            
+                            **Enterprise Value (EV)**:
+                            - Valor total del negocio operativo
+                            - Sin considerar deuda o efectivo
+                            
+                            **Equity Value**:
+                            - EV - Deuda Neta = Lo que vale para los accionistas
+                            - Es el precio justo si compras el 100%
+                            
+                            **💡 Señales a Observar:**
+                            - WACC > 15% → Negocio muy arriesgado
+                            - Valor Terminal > 80% → Demasiada incertidumbre futura
+                            - FCF negativos primeros años → Normal en startups
+                            
+                            **📌 Ejemplo Práctico:**
+                            Si el DCF dice que tu empresa vale €10M:
+                            - Con deuda de €2M → Equity vale €8M
+                            - Si tienes 40% → Tu parte vale €3.2M
+                            """)
                         dcf = valoracion['dcf_detalle']
                         
                         col1, col2 = st.columns(2)
@@ -3165,7 +3385,74 @@ Ajustes debt-like items:
                     
                     with val_tab3:
                         st.subheader("Valoración por Múltiplos")
-                        
+                        with st.expander("💡 **¿Qué son los múltiplos de valoración y cómo usarlos?**"):
+                            st.markdown("""
+                            ### 🔢 Valoración por Múltiplos - Guía para No Financieros
+                            
+                            **🎯 ¿Qué son los Múltiplos?**
+                            Es como tasar una casa comparándola con las del barrio:
+                            - Si las casas similares se venden a 3,000€/m²
+                            - Y tu casa tiene 100m² → Vale ~300,000€
+                            - En empresas usamos ventas o EBITDA en vez de m²
+                            
+                            **📊 Los Múltiplos Más Importantes:**
+                            
+                            **1️⃣ EV/EBITDA (El más usado en M&A)**
+                            - Valor Empresa ÷ EBITDA
+                            - Ejemplo: EV/EBITDA = 8x significa que la empresa vale 8 veces su beneficio operativo anual
+                            - **Interpretación por rangos**:
+                              - 4-6x → Empresas maduras, bajo crecimiento
+                              - 6-10x → Crecimiento moderado, estable
+                              - 10-15x → Alto crecimiento o sector premium
+                              - >15x → Startups o sectores muy valorados
+                            
+                            **2️⃣ EV/Ventas (Para empresas en crecimiento)**
+                            - Útil cuando no hay beneficios aún
+                            - Típico en tecnología o empresas nuevas
+                            - **Benchmark por sector**:
+                              - Software: 3-10x
+                              - Servicios: 0.5-2x
+                              - Retail: 0.3-1x
+                              - Industrial: 0.5-1.5x
+                            
+                            **3️⃣ P/E (Price/Earnings)**
+                            - Precio ÷ Beneficio por acción
+                            - Más usado en bolsa que en M&A privado
+                            - 15-20x es típico en empresas estables
+                            
+                            **🔍 Cómo Interpretar los Resultados:**
+                            
+                            **Si tu múltiplo > Media del sector**:
+                            - Posibles razones positivas:
+                              ✅ Mejor margen que competidores
+                              ✅ Mayor crecimiento
+                              ✅ Mejor posición competitiva
+                            - O podría estar sobrevalorada ⚠️
+                            
+                            **Si tu múltiplo < Media del sector**:
+                            - Posibles razones:
+                              ⚠️ Menores márgenes
+                              ⚠️ Más riesgo percibido
+                              ⚠️ Menor crecimiento
+                            - O podría ser una oportunidad 💡
+                            
+                            **💡 Ajustes Típicos a los Múltiplos:**
+                            - **Descuento por tamaño**: -20-30% si <€10M ventas
+                            - **Descuento por iliquidez**: -20-30% empresa privada
+                            - **Premio por control**: +20-30% si compras mayoría
+                            
+                            **📌 Ejemplo Práctico:**
+                            - Tu empresa: EBITDA €1M
+                            - Múltiplo sector: 7x
+                            - Valor base: €7M
+                            - Descuento tamaño -20%: €5.6M
+                            - Este es tu Enterprise Value estimado
+                            
+                            **⚠️ Limitaciones:**
+                            - Los múltiplos son una foto, no una película
+                            - No capturan el potencial futuro como el DCF
+                            - Muy sensibles a la calidad de los comparables
+                            """)
                         # Mostrar múltiplos
                         multiples = valoracion['multiples_detalle']
                         
@@ -3198,7 +3485,83 @@ Ajustes debt-like items:
                     
                     with val_tab4:
                         st.subheader("Análisis de Sensibilidad")
-                        
+                        with st.expander("💡 **¿Qué es el análisis de sensibilidad y por qué es crucial?**"):
+                            st.markdown("""
+                            ### 🎯 Análisis de Sensibilidad - Guía para No Financieros
+                            
+                            **🎲 ¿Qué es el Análisis de Sensibilidad?**
+                            Es como un "¿Y si...?" para tu valoración:
+                            - ¿Y si las ventas crecen 5% menos?
+                            - ¿Y si los tipos de interés suben?
+                            - ¿Y si los márgenes bajan 2 puntos?
+                            - Muestra cómo cambia el valor con diferentes escenarios
+                            
+                            **📊 Las Variables Clave que se Analizan:**
+                            
+                            **1️⃣ WACC (Tasa de Descuento)**
+                            - **Qué representa**: El coste del dinero + riesgo
+                            - **Si sube**: La valoración BAJA (futuro vale menos)
+                            - **Si baja**: La valoración SUBE
+                            - **Rango típico**: 8% (muy seguro) a 15% (arriesgado)
+                            
+                            **2️⃣ Tasa de Crecimiento Terminal (g)**
+                            - **Qué es**: A qué ritmo crecerá la empresa "para siempre"
+                            - **Rango prudente**: 2-3% (inflación)
+                            - **Impacto**: Pequeños cambios = grandes diferencias en valor
+                            
+                            **3️⃣ Márgenes EBITDA**
+                            - **Qué mide**: Rentabilidad operativa
+                            - **Variación típica**: ±2-5 puntos porcentuales
+                            - **Impacto directo** en flujos de caja
+                            
+                            **🔍 Cómo Leer la Tabla de Sensibilidad:**
+                            
+                            La tabla muestra una matriz donde:
+                            - **Filas**: Diferentes valores de WACC
+                            - **Columnas**: Diferentes tasas de crecimiento (g)
+                            - **Celdas**: Valor resultante de tu empresa
+                            
+                            **Ejemplo de interpretación**:
+                            ```
+                            WACC↓ / g→   2%     2.5%    3%
+                            9%           8.5M    9.2M    10.1M
+                            10%          7.8M    8.4M    9.1M  ← Caso base
+                            11%          7.2M    7.7M    8.3M
+                            ```
+                            
+                            **💡 Qué Buscar:**
+                            
+                            **Valoración Robusta** ✅:
+                            - Poca variación entre escenarios
+                            - La mayoría de casos dan valores similares
+                            - Tu caso base está en el centro
+                            
+                            **Valoración Frágil** ⚠️:
+                            - Enormes diferencias entre escenarios
+                            - Valor se duplica o divide por 2 fácilmente
+                            - Muy sensible a pequeños cambios
+                            
+                            **📌 Reglas Prácticas:**
+                            
+                            1. **Si el rango es estrecho** (ej: €8-10M):
+                               - Valoración confiable
+                               - Menor riesgo para inversores
+                            
+                            2. **Si el rango es amplio** (ej: €5-15M):
+                               - Mayor incertidumbre
+                               - Necesitas más análisis
+                               - Considera el escenario conservador
+                            
+                            3. **Zona de confort**:
+                               - WACC entre 9-12%
+                               - g entre 2-3%
+                               - Si necesitas valores extremos para justificar el precio, cuidado 🚨
+                            
+                            **⚡ Consejo Pro:**
+                            Los inversores profesionales siempre miran el caso pesimista.
+                            Si tu empresa sigue siendo atractiva en el peor escenario, 
+                            es una inversión sólida.
+                            """)
                         # Mostrar tabla de sensibilidad
                         if 'sensibilidad' in dcf:
                             st.markdown(f"**Sensibilidad del Valor del Equity ({get_simbolo_moneda()}M) a WACC y g:**")
