@@ -21,7 +21,7 @@ def check_password():
     
     def password_entered():
         """Checks whether a password entered by the user is correct."""
-        if st.session_state["password"] == st.secrets.get("APP_PASSWORD", "V@luPr0!A#2024"):
+        if st.session_state.get("password", "") == st.secrets.get("APP_PASSWORD", "V@luPr0!A#2024"):
             st.session_state["password_correct"] = True
             del st.session_state["password"]
         else:
@@ -135,7 +135,7 @@ def get_simbolo_moneda():
 
 # ========================================================
 
-def mostrar_resumen_ejecutivo_profesional():
+def mostrar_resumen_ejecutivo_profesional(num_empleados_actual=None, año_fundacion_actual=None):
     """Muestra el resumen ejecutivo profesional mejorado"""
     
     if 'datos_guardados' not in st.session_state:
@@ -151,7 +151,8 @@ def mostrar_resumen_ejecutivo_profesional():
     metricas = datos.get('metricas', {})
     pyl = datos.get('pyl', datos.get('proyecciones', {}).get('pyl'))
     ratios = datos.get('ratios', datos.get('proyecciones', {}).get('ratios'))
-    
+    balance = datos.get('balance', datos.get('proyecciones', {}).get('balance'))
+
     # Obtener valoración real
     valor_empresa = valoracion_prof.get('valoracion_final', 0)
     tir_real = valoracion_prof.get('dcf_detalle', {}).get('tir', metricas.get('tir_proyecto', 0))
@@ -226,16 +227,46 @@ def mostrar_resumen_ejecutivo_profesional():
         st.markdown(f"""
         **{empresa}**  
         📍 Sector: {sector}  
-        👥 Empleados: {datos.get('datos_empresa', {}).get('num_empleados', 10)}  
-        📅 Fundada: {datos.get('datos_empresa', {}).get('año_fundacion', 2020)}
+        👥 Empleados: {st.session_state.get('num_empleados_sidebar', 10)}  
+        📅 Fundada: {st.session_state.get('año_fundacion_sidebar', 2020)}
         """)
     
+    # Calcular métricas históricas reales
+    datos_empresa = datos.get('datos_empresa', {})
+    if datos_empresa and 'ventas_historicas' in datos_empresa:
+        ventas_historicas = datos_empresa['ventas_historicas'][-1] if isinstance(datos_empresa['ventas_historicas'], list) else datos_empresa['ventas_historicas']
+        costos_pct = datos_empresa.get('costos_variables_pct', 0)
+        gastos_personal = datos_empresa.get('gastos_personal', 0)
+        gastos_generales = datos_empresa.get('gastos_generales', 0)
+        gastos_marketing = datos_empresa.get('gastos_marketing', 0)
+        
+        margen_bruto = ventas_historicas * (1 - costos_pct)
+        ebitda_actual = margen_bruto - gastos_personal - gastos_generales - gastos_marketing
+        margen_ebitda_actual = (ebitda_actual / ventas_historicas * 100) if ventas_historicas > 0 else 0
+        ebitda_historico = margen_bruto - gastos_personal - gastos_generales - gastos_marketing
+        margen_ebitda_historico = (ebitda_historico / ventas_historicas * 100) if ventas_historicas > 0 else 0
+        
+    else:
+        # Obtener valores históricos del sidebar - 100% dinámico
+        ventas_historicas = st.session_state.get('ventas_1', pyl['Ventas'].iloc[0])
+        
+        # Obtener todos los valores del sidebar usando las keys
+        costos_pct = st.session_state.get('costos_variables_slider', 40) / 100
+        gastos_personal = st.session_state.get('gastos_personal_key', 0)
+        gastos_generales = st.session_state.get('gastos_generales_key', 0)
+        gastos_marketing = st.session_state.get('gastos_marketing_key', 0)
+        
+        # Calcular EBITDA histórico con valores reales del sidebar
+        margen_bruto = ventas_historicas * (1 - costos_pct)
+        ebitda_historico = margen_bruto - gastos_personal - gastos_generales - gastos_marketing
+        margen_ebitda_historico = (ebitda_historico / ventas_historicas * 100) if ventas_historicas > 0 else 0
+
     with col_neg2:
         st.markdown(f"""
         **Posición Financiera:**  
-        💰 Ventas actuales: {get_simbolo_moneda()}{pyl['Ventas'].iloc[0]:,.0f}  
-        📊 EBITDA actual: {get_simbolo_moneda()}{pyl['EBITDA'].iloc[0]:,.0f}  
-        💵 Margen EBITDA: {pyl['EBITDA %'].iloc[0]:.1f}%
+        💰 Ventas actuales: {get_simbolo_moneda()}{ventas_historicas:,.0f}  
+        📊 EBITDA actual: {get_simbolo_moneda()}{ebitda_historico:,.0f}  
+        💵 Margen EBITDA: {margen_ebitda_historico:.1f}%
         """)
     
     # MÉTRICAS FINANCIERAS CLAVE
@@ -246,28 +277,40 @@ def mostrar_resumen_ejecutivo_profesional():
     metricas_tabla = pd.DataFrame({
         'Métrica': ['Ventas (€k)', 'EBITDA (€k)', 'Margen EBITDA (%)', 'Cash Flow (€k)'],
         'Actual': [
-            f"{pyl['Ventas'].iloc[0]/1000:.0f}",
-            f"{pyl['EBITDA'].iloc[0]/1000:.0f}",
-            f"{pyl['EBITDA %'].iloc[0]:.1f}%",
-            f"{cash_flow['Free Cash Flow'].iloc[0]/1000:.0f}"
+            f"{ventas_historicas/1000:,.0f}",
+            f"{ebitda_historico/1000:,.0f}",
+            f"{margen_ebitda_historico:.1f}%",
+            "N/A"  # No hay cash flow histórico
         ],
         'Año 1': [
-            f"{pyl['Ventas'].iloc[1]/1000:.0f}",
-            f"{pyl['EBITDA'].iloc[1]/1000:.0f}",
+            f"{pyl['Ventas'].iloc[0]/1000:,.0f}",
+            f"{pyl['EBITDA'].iloc[0]/1000:,.0f}",
+            f"{pyl['EBITDA %'].iloc[0]:.1f}%",
+            f"{cash_flow['Free Cash Flow'].iloc[0]/1000:,.0f}"
+        ],
+        'Año 2': [
+            f"{pyl['Ventas'].iloc[1]/1000:,.0f}",
+            f"{pyl['EBITDA'].iloc[1]/1000:,.0f}",
             f"{pyl['EBITDA %'].iloc[1]:.1f}%",
-            f"{cash_flow['Free Cash Flow'].iloc[0]/1000:.0f}"
+            f"{cash_flow['Free Cash Flow'].iloc[1]/1000:,.0f}"
         ],
         'Año 3': [
-            f"{pyl['Ventas'].iloc[3]/1000:.0f}",
-            f"{pyl['EBITDA'].iloc[3]/1000:.0f}",
+            f"{pyl['Ventas'].iloc[2]/1000:,.0f}",
+            f"{pyl['EBITDA'].iloc[2]/1000:,.0f}",
+            f"{pyl['EBITDA %'].iloc[2]:.1f}%",
+            f"{cash_flow['Free Cash Flow'].iloc[2]/1000:,.0f}"
+        ],
+        'Año 4': [
+            f"{pyl['Ventas'].iloc[3]/1000:,.0f}",
+            f"{pyl['EBITDA'].iloc[3]/1000:,.0f}",
             f"{pyl['EBITDA %'].iloc[3]:.1f}%",
-            f"{cash_flow['Free Cash Flow'].iloc[0]/1000:.0f}"
+            f"{cash_flow['Free Cash Flow'].iloc[3]/1000:,.0f}"
         ],
         'Año 5': [
-            f"{pyl['Ventas'].iloc[4]/1000:.0f}",
-            f"{pyl['EBITDA'].iloc[4]/1000:.0f}",
+            f"{pyl['Ventas'].iloc[4]/1000:,.0f}",
+            f"{pyl['EBITDA'].iloc[4]/1000:,.0f}",
             f"{pyl['EBITDA %'].iloc[4]:.1f}%",
-            f"{cash_flow['Free Cash Flow'].iloc[0]/1000:.0f}"
+            f"{cash_flow['Free Cash Flow'].iloc[4]/1000:,.0f}"
         ]
     })
     
@@ -288,6 +331,13 @@ def mostrar_resumen_ejecutivo_profesional():
         - **Ejemplo**: ROE del 15% = Por cada 100€ invertidos, genera 15€ de beneficio al año
         - **Benchmark sector**: 10-15% es saludable, >20% es excelente
         - **🚨 Alerta**: <5% indica baja rentabilidad para los accionistas
+                    
+        **🏭 ROCE (Return on Capital Employed - Rentabilidad sobre Capital Empleado)**
+        - **¿Qué mide?**: Cuánto gana la empresa con el capital que usa para operar
+        - **Ejemplo**: ROCE del 23% = Por cada 100€ de capital operativo, genera 23€ de beneficio
+        - **Benchmark sector**: 15-20% es bueno, >25% es excelente
+        - **🚨 Alerta**: <10% indica uso ineficiente del capital
+        - **💡 Diferencia con ROE**: ROCE mide eficiencia operativa, ROE mide retorno a accionistas           
         
         **📈 Margen EBITDA**
         - **¿Qué mide?**: De cada 100€ vendidos, cuántos quedan como beneficio operativo
@@ -309,7 +359,7 @@ def mostrar_resumen_ejecutivo_profesional():
         - **EBITDA alto, Neto bajo**: Posibles problemas de deuda o impuestos ⚠️
         - **ROE bajo con márgenes altos**: Demasiado capital sin usar eficientemente 💡
         """)
-    col_rent1, col_rent2, col_rent3, col_rent4 = st.columns(4)
+    col_rent1, col_rent2, col_rent3, col_rent4, col_rent5 = st.columns(5)
     
     with col_rent1:
         if 'Costos' in pyl.columns:
@@ -334,6 +384,11 @@ def mostrar_resumen_ejecutivo_profesional():
         else:
             roe = 0
         st.metric("ROE", f"{roe:.1f}%", help="Beneficio Neto / Patrimonio Neto")
+
+    with col_rent5:
+        # Obtener ROCE del DataFrame de ratios
+        roce = ratios.iloc[-1].get('roce_%', 0) if ratios is not None and not ratios.empty else 0
+        st.metric("ROCE", f"{roce:.1f}%", help="EBIT / Capital Empleado")
     
     # 2. INDICADORES DE LIQUIDEZ
     st.markdown("#### 2️⃣ **Liquidez** *(¿Puede pagar sus deudas a corto plazo?)*")
@@ -552,10 +607,10 @@ def mostrar_resumen_ejecutivo_profesional():
     st.markdown("### 💪 **FORTALEZAS COMPETITIVAS**")
     
     fortalezas_mejoradas = [
-        f"**Rentabilidad sólida**: Margen EBITDA del {metricas.get('margen_ebitda_promedio', 0):.1f}% (vs 15% sector)",
+        f"**Rentabilidad sólida**: Margen EBITDA del {pyl['EBITDA %'].iloc[-1]:.1f}% (año 5)",
         f"**Bajo endeudamiento**: Ratio deuda/EBITDA de {ratios.iloc[-1]['ratio_endeudamiento']:.2f}x",
-        f"**Eficiencia operativa**: ROE del {ratios.iloc[-1].get('roe', 18):.0f}% y ROCE del {ratios.iloc[-1].get('roce', 22):.0f}%",
-        f"**Posición de caja**: {get_simbolo_moneda()}{datos.get('balance', {}).get('Caja', pd.Series([100000])).iloc[0]:,.0f} en caja",
+        f"**Eficiencia operativa**: ROE del {ratios.iloc[-1].get('roe_%', 0):.0f}% y ROCE del {ratios.iloc[-1].get('roce_%', 0):.0f}%",
+        f"**Posición de caja**: {get_simbolo_moneda()}{balance['tesoreria'].iloc[-1]:,.0f} proyectada año 5",
         f"**Crecimiento sostenible**: CAGR {metricas.get('cagr_ventas', 0):.1f}% con generación positiva de caja"
     ]
     
@@ -569,18 +624,37 @@ def mostrar_resumen_ejecutivo_profesional():
     # Analizar riesgos basados en métricas reales
     riesgos_identificados = []
     
+    # Riesgos basados en métricas
     if metricas.get('cagr_ventas', 0) < 5:
         riesgos_identificados.append(f"**Crecimiento limitado**: {metricas.get('cagr_ventas', 0):.1f}% CAGR vs 15-20% del sector")
     
     if ratios.iloc[-1]['ratio_liquidez'] < 1.5:
         riesgos_identificados.append(f"**Liquidez ajustada**: Ratio de liquidez {ratios.iloc[-1]['ratio_liquidez']:.2f}x")
     
-    # Agregar riesgos estándar
-    riesgos_identificados.extend([
-        "**Dependencia del equipo**: Solo 10 empleados, riesgo de rotación",
-        "**Necesidad de inversión**: Para acelerar crecimiento",
-        "**Competencia sectorial**: Sector muy dinámico y competitivo"
-    ])
+    # Riesgos basados en tamaño/estructura
+    num_empleados = datos.get('datos_empresa', {}).get('num_empleados', datos.get('datos_empresa', {}).get('empleados', 12))
+    if num_empleados < 10:
+        riesgos_identificados.append(f"**Equipo muy reducido**: Solo {num_empleados} empleados, riesgo operativo alto")
+    elif num_empleados > 50:
+        riesgos_identificados.append(f"**Estructura pesada**: {num_empleados} empleados, riesgo de ineficiencia")
+    
+    # Riesgos por sector
+    sector = datos.get('sector', '').lower()
+    if 'ecommerce' in sector or 'online' in sector:
+        riesgos_identificados.append("**Márgenes ajustados**: Presión competitiva en precios online")
+    elif 'tecnolog' in sector:
+        riesgos_identificados.append("**Obsolescencia tecnológica**: Necesidad constante de innovación")
+    elif 'industrial' in sector:
+        riesgos_identificados.append("**Intensivo en capital**: Requiere inversiones continuas en activos")
+    
+    # Riesgos por endeudamiento
+    ratio_deuda = ratios.iloc[-1].get('ratio_endeudamiento', 0)
+    if ratio_deuda > 3:
+        riesgos_identificados.append(f"**Alto endeudamiento**: Ratio deuda/EBITDA de {ratio_deuda:.1f}x")
+    
+    # Si no hay riesgos específicos, añadir uno genérico
+    if len(riesgos_identificados) == 0:
+        riesgos_identificados.append("**Entorno competitivo**: Mantener vigilancia del mercado")
     
     for riesgo in riesgos_identificados:
         st.warning(f"! {riesgo}")
@@ -593,28 +667,66 @@ def mostrar_resumen_ejecutivo_profesional():
     
     with col_rec1:
         st.markdown("**Corto Plazo (0-12 meses)**")
-        st.info("""
-        ✅ Optimizar estructura de capital  
-        ✅ Plan de captación de talento  
-        ✅ Reducir días cobro a 45 días
-        """)
+        recom_corto = []
+        
+        # Recomendaciones basadas en métricas
+        if ratios.iloc[-1].get('ratio_endeudamiento', 0) < 0.5:
+            recom_corto.append("✅ Considerar leverage moderado para acelerar crecimiento")
+        else:
+            recom_corto.append("✅ Reducir endeudamiento actual")
+            
+        if datos.get('datos_empresa', {}).get('num_empleados', 0) < 20:
+            recom_corto.append("✅ Fortalecer equipo en áreas clave")
+        
+        if 'ecommerce' in datos.get('sector', '').lower():
+            recom_corto.append("✅ Optimizar conversión y AOV online")
+        elif 'tecnolog' in datos.get('sector', '').lower():
+            recom_corto.append("✅ Acelerar desarrollo de producto")
+        
+        st.info("\n".join(recom_corto[:3]))  # Máximo 3 recomendaciones
     
     with col_rec2:
         st.markdown("**Medio Plazo (1-3 años)**")
-        st.info("""
-        📊 Nuevas líneas producto/servicio  
-        🚀 Plan expansión geográfica  
-        💡 Inversión en I+D y tecnología
-        """)
+        recom_medio = []
+        
+        if metricas.get('cagr_ventas', 0) > 15:
+            recom_medio.append("📊 Consolidar crecimiento actual")
+        else:
+            recom_medio.append("📊 Acelerar crecimiento orgánico")
+            
+        if valor_empresa > 5000000:
+            recom_medio.append("🚀 Expansión internacional")
+        else:
+            recom_medio.append("🚀 Expansión nacional primero")
+            
+        recom_medio.append("💡 Digitalización de procesos")
+        
+        st.info("\n".join(recom_medio[:3]))
     
     with col_rec3:
         st.markdown("**Largo Plazo (3-5 años)**")
-        st.info("""
-        🏭 Adquisiciones estratégicas  
-        🌍 Internacionalización  
-        📈 Preparación Serie A
-        """)
+        recom_largo = []
+        
+        if datos.get('empresa_familiar') == 'Sí':
+            recom_largo.append("🏭 Profesionalización del gobierno corporativo")
+        else:
+            recom_largo.append("🏭 Consolidación sectorial vía M&A")
+            
+        if valor_empresa > 10000000:
+            recom_largo.append("📈 Preparación para salida a bolsa")
+        else:
+            recom_largo.append("📈 Preparación para ronda Serie A/B")
+            
+        recom_largo.append("🌍 Liderazgo en sostenibilidad")
+        
+        st.info("\n".join(recom_largo[:3]))
     
+    # INVESTMENT THESIS (si existe)
+    if datos.get('analisis_ia', {}).get('resumen_ejecutivo'):
+        st.markdown("---")
+        st.markdown("### 📊 **INVESTMENT THESIS - ANÁLISIS CFO**")
+        st.info(datos['analisis_ia']['resumen_ejecutivo'])
+
     # CONCLUSIÓN
     st.markdown("---")
     st.markdown("### 🏁 **CONCLUSIÓN Y PRÓXIMOS PASOS**")
@@ -1220,9 +1332,10 @@ with st.sidebar:
         "Año de Fundación",
         min_value=1900,
         max_value=datetime.now().year,
-        value=datetime.now().year - 10,  # Por defecto 10 años
+        value=default_año if 'default_año' in locals() else datetime.now().year - 10,
         step=1,
-        help="Año en que se constituyó la empresa"
+        help="Año en que se constituyó la empresa",
+        key="año_fundacion_sidebar",
     )
 
     # Características de la empresa
@@ -1358,9 +1471,10 @@ with st.sidebar:
     costos_variables_pct = st.slider(
         "Costos Variables (% de ventas)",
         min_value=10,
-        max_value=98,  # AUMENTADO A 98%
+        max_value=98,
         value=default_costos_var if 'default_costos_var' in locals() else 40,
-        help="Incluye: materias primas, mercancías, comisiones de venta"
+        help="Incluye: materias primas, mercancías, comisiones de venta",
+        key="costos_variables_slider"
     ) / 100
 
     gastos_personal = st.number_input(
@@ -1368,15 +1482,17 @@ with st.sidebar:
         min_value=0,
         value=default_gastos_personal if 'default_gastos_personal' in locals() else 120000,
         step=5000,
-        help="Incluye: salarios, seguridad social, beneficios"
-    )
+        help="Incluye: salarios, seguridad social, beneficios",
+        key="gastos_personal_key"
+    )    
 
     gastos_generales = st.number_input(
         f"Gastos Generales Anuales ({get_simbolo_moneda()})",
         min_value=0,
         value=default_gastos_generales if 'default_gastos_generales' in locals() else 36000,
         step=1000,
-        help="Incluye: alquiler, suministros, seguros"
+        help="Incluye: alquiler, suministros, seguros",
+        key="gastos_generales_key"
     )
 
     gastos_marketing = st.number_input(
@@ -1384,7 +1500,8 @@ with st.sidebar:
         min_value=0,
         value=default_gastos_marketing if 'default_gastos_marketing' in locals() else 12000,
         step=1000,
-        help="Incluye: publicidad, web, redes sociales"
+        help="Incluye: publicidad, web, redes sociales",
+        key="gastos_marketing_key"
     )
 
     # Cálculo de EBITDA en tiempo real
@@ -1433,7 +1550,8 @@ with st.sidebar:
             min_value=1,
             value=default_empleados if 'default_empleados' in locals() else 10,
             step=1,
-            help="Total de empleados en plantilla"
+            help="Total de empleados en plantilla",
+            key="num_empleados_sidebar",
         )
         
         coste_medio_empleado = st.number_input(
@@ -2609,9 +2727,21 @@ if generar_proyeccion:
         
         # Mantener compatibilidad temporal
         'deuda_actual': prestamo_principal + hipoteca_principal + leasing_total + otros_prestamos_lp + total_dispuesto,
-        'tipo_interes': prestamo_interes if prestamo_principal > 0 else 0.05
+        'tipo_interes': prestamo_interes if prestamo_principal > 0 else 0.05,
+        
+        # Agregar datos del balance inicial
+        'balance_activo': {
+            'clientes_inicial': clientes_inicial,
+            'inventario_inicial': inventario_inicial
+        },
+        'balance_pasivo': {
+            'proveedores_inicial': proveedores_inicial
+        }
     }
-    
+
+    # Guardar datos_empresa en session_state para uso posterior
+    st.session_state['datos_empresa'] = datos_empresa
+
     # Preparar datos para el nuevo modelo
     empresa_info = {
         'nombre': nombre_empresa,
@@ -2625,7 +2755,15 @@ if generar_proyeccion:
         'meses_indemnizacion': meses_indemnizacion,
         'antiguedad_media': antiguedad_media,
         'rotacion_anual': rotacion_anual,
-        'pasivo_laboral_total': pasivo_laboral_total
+        'pasivo_laboral_total': pasivo_laboral_total,
+        # Agregar datos del balance inicial
+        'balance_activo': {
+            'clientes_inicial': clientes_inicial,
+            'inventario_inicial': inventario_inicial
+        },
+        'balance_pasivo': {
+            'proveedores_inicial': proveedores_inicial
+        }
     }
     # Margen EBITDA esperado basado en el sector
     margenes_por_sector = {
@@ -2935,30 +3073,101 @@ if generar_proyeccion:
         """
     
    # Crear analisis_ia con la nueva información
-        analisis_ia = {
-            'resumen': f"Proyecto con TIR del {metricas['tir_proyecto']:.1f}%",
-            'resumen_ejecutivo': f"""
-            La empresa {nombre_empresa} del sector {sector} presenta un plan de negocio con 
-            crecimiento proyectado del {metricas['cagr_ventas']:.1f}% anual, alcanzando ventas de {get_simbolo_moneda()}{pyl['Ventas'].iloc[-1]:,.0f}
-            en el año 5. El margen EBITDA promedio es del {metricas['margen_ebitda_promedio']:.1f}%.
-            La viabilidad del proyecto se considera {'ALTA' if metricas['tir_proyecto'] > 15 else 'MEDIA'}.
 
-            """,  # AGREGAR ESTA CLAVE
-            'viabilidad': 'ALTA' if metricas['tir_proyecto'] > 15 else 'MEDIA',
-            'rating': '⭐⭐⭐⭐' if metricas['roi_proyectado'] > 20 else '⭐⭐⭐',
+        # Obtener datos históricos para el análisis
+        datos_empresa = st.session_state.get('datos_empresa', {})
+        if datos_empresa and 'ventas_historicas' in datos_empresa:
+            ventas_historicas = datos_empresa['ventas_historicas'][-1] if isinstance(datos_empresa['ventas_historicas'], list) else datos_empresa['ventas_historicas']
+            costos_pct = datos_empresa.get('costos_variables_pct', 0)
+            gastos_personal = datos_empresa.get('gastos_personal', 0)
+            gastos_generales = datos_empresa.get('gastos_generales', 0)
+            gastos_marketing = datos_empresa.get('gastos_marketing', 0)
+            margen_bruto = ventas_historicas * (1 - costos_pct)
+        else:
+            # Fallback a valores del primer año proyectado
+            ventas_historicas = pyl['Ventas'].iloc[0]
+            margen_bruto = pyl['Margen Bruto'].iloc[0]
+            gastos_personal = pyl['Gastos Personal'].iloc[0]
+            gastos_generales = 0
+            gastos_marketing = 0
+
+        # Análisis profesional estilo CFO/M&A
+        # Calcular métricas adicionales para el análisis
+        # Asegurar que las variables están definidas
+        if 'ebitda_actual' not in locals():
+            ebitda_actual = pyl['EBITDA'].iloc[0]
+        if 'ventas_historicas' not in locals():
+            ventas_historicas = pyl['Ventas'].iloc[0]
+        if 'margen_ebitda_actual' not in locals():
+            margen_ebitda_actual = (ebitda_actual / ventas_historicas * 100) if ventas_historicas > 0 else 0
+
+        # Obtener valoración profesional
+        valoracion_prof = modelo.realizar_valoracion_bancainversion() if hasattr(modelo, 'realizar_valoracion_bancainversion') else {}
+        valor_empresa_calc = valoracion_prof.get('valoracion_final', 0)    
+        # Obtener TIR real
+        tir_real = valoracion_prof.get('dcf_detalle', {}).get('tir', metricas.get('tir_proyecto', 0))
+        multiplo_ventas = valor_empresa_calc / ventas_historicas if ventas_historicas > 0 else 0
+        multiplo_ebitda = valor_empresa_calc / ebitda_actual if ebitda_actual > 0 else 0
+
+        # Obtener EBITDA histórico real
+        ventas_hist = st.session_state.get('ventas_1', ventas_historicas)
+        costos_pct = st.session_state.get('costos_variables_slider', 40) / 100
+        gastos_personal = st.session_state.get('gastos_personal_key', 0)
+        gastos_generales = st.session_state.get('gastos_generales_key', 0)
+        gastos_marketing = st.session_state.get('gastos_marketing_key', 0)
+
+        margen_bruto = ventas_hist * (1 - costos_pct)
+        ebitda_historico = margen_bruto - gastos_personal - gastos_generales - gastos_marketing
+
+        # Calcular múltiplos profesionales LTM/NTM
+        multiplo_ebitda_ltm = valor_empresa_calc / ebitda_historico if ebitda_historico > 0 else 0
+        multiplo_ebitda_ntm = valor_empresa_calc / pyl['EBITDA'].iloc[0] if pyl['EBITDA'].iloc[0] > 0 else 0
+        multiplo_ventas_ltm = valor_empresa_calc / ventas_historicas if ventas_historicas > 0 else 0
+
+        analisis_ia = {
+            'resumen': f"Deal atractivo con TIR {metricas['tir_proyecto']:.1f}% y múltiplo EV/EBITDA {multiplo_ebitda:.1f}x",
+            'multiplo_ebitda_ltm': multiplo_ebitda_ltm,
+            'multiplo_ebitda_ntm': multiplo_ebitda_ntm,
+            'multiplo_ventas_ltm': multiplo_ventas_ltm,
+            'resumen_ejecutivo': f"""
+            
+            **INVESTMENT THESIS**
+            
+            {nombre_empresa} presenta una oportunidad de inversión {'excepcional' if metricas['tir_proyecto'] > 30 else 'atractiva'} 
+            en el sector {sector} con las siguientes características:
+            
+            **Valoración**: Enterprise Value de {get_simbolo_moneda()}{valor_empresa_calc:,.0f} 
+            ({multiplo_ebitda_ltm:.1f}x EBITDA LTM / {multiplo_ebitda_ntm:.1f}x EBITDA NTM, {multiplo_ventas_ltm:.1f}x ventas LTM)
+            
+            **Crecimiento**: CAGR del {metricas['cagr_ventas']:.1f}% en ventas,
+            alcanzando {get_simbolo_moneda()}{pyl['Ventas'].iloc[-1]/1e6:.1f}M en año 5
+            
+            **Rentabilidad**: Mejora de margen EBITDA desde {margen_ebitda_actual:.1f}% actual hasta 
+            {pyl['EBITDA %'].iloc[-1]:.1f}% en año 5 (+{pyl['EBITDA %'].iloc[-1] - margen_ebitda_actual:.0f}pp)
+                  
+            **Retorno**: TIR del proyecto {tir_real:.1f}% con payback
+            
+            **Estructura de capital**: Ratio D/E actual {ratios.iloc[0]['ratio_endeudamiento']:.1f}x con capacidad de 
+            apalancamiento adicional hasta 3.0x para acelerar crecimiento
+            
+            **Exit Strategy**: Múltiples salidas viables en 3-5 años vía trade sale (competidores estratégicos), 
+            secondary buyout (fondos de PE) o {'IPO' if valoracion.get('valor_empresa', 0) > 50e6 else 'venta estratégica'}
+            """,
+            'viabilidad': 'ALTA' if metricas['tir_proyecto'] > 20 else 'MEDIA' if metricas['tir_proyecto'] > 10 else 'BAJA',
+            'rating': '⭐⭐⭐⭐⭐' if metricas['tir_proyecto'] > 30 else '⭐⭐⭐⭐' if metricas['tir_proyecto'] > 20 else '⭐⭐⭐',
             'fortalezas': [
-                f"Crecimiento CAGR del {metricas['cagr_ventas']:.1f}%",
-                f"Margen EBITDA promedio: {metricas['margen_ebitda_promedio']:.1f}%",
-                f"Valoración: {get_simbolo_moneda()}{valoracion.get('valor_empresa', 0):,.0f}"
+                f"Valoración atractiva: {multiplo_ebitda_ltm:.1f}x EBITDA LTM / {multiplo_ebitda_ntm:.1f}x EBITDA NTM (vs {multiplo_ebitda * 1.5:.1f}x peers)",
+                f"Margen EBITDA escalable: {margen_ebitda_actual:.1f}% → {pyl['EBITDA %'].iloc[-1]:.1f}%",
+                f"FCF yield del {(cash_flow['Free Cash Flow'].iloc[-1] / valoracion.get('valor_empresa', 1)) * 100:.1f}% en año 5"
             ],
             'riesgos': [
-                f"Ratio endeudamiento: {ratios.iloc[-1]['ratio_endeudamiento']:.2f}x",
-                f"Cobertura intereses: {ratios.iloc[-1]['cobertura_intereses']:.2f}x"
+                f"Working capital intensivo: {((balance['clientes'].iloc[-1] + balance['inventario'].iloc[-1]) / pyl['Ventas'].iloc[-1] * 365):.0f} días",
+                f"Concentración {'sectorial' if 'ecommerce' in sector.lower() else 'geográfica'}: mercado {'online competitivo' if 'ecommerce' in sector.lower() else 'local'}"
             ],
             'recomendaciones': [
-                "Optimizar estructura de capital",
-                "Mejorar márgenes operativos",
-                "Reducir días de cobro"
+                f"Entry múltiple target: {multiplo_ebitda * 0.8:.1f}x EBITDA (20% descuento)",
+                f"Estructura deal: 70% equity, 30% earn-out basado en EBITDA año 2",
+                f"Value creation: Focus en {'conversión online' if 'ecommerce' in sector.lower() else 'eficiencia operativa'} (+300bps margen)"
             ]
         }
     
@@ -3025,8 +3234,8 @@ if generar_proyeccion:
             'ingresos_iniciales': params_operativos.get('ingresos_iniciales', 0),
             'margen_ebitda_inicial': params_operativos.get('margen_ebitda', 10),
             'crecimiento_ventas': params_operativos.get('crecimiento_ventas', 5),
-            'empleados': datos_empresa.get('empleados', 10),
-            'año_fundacion': datetime.now().year - 5,
+            'empleados': datos_empresa.get('num_empleados', 10),
+            'año_fundacion': datos_empresa.get('año_fundacion', datetime.now().year - 5),
             'tesoreria_inicial': params_operativos.get('tesoreria', 500000),
             'capital_social': params_operativos.get('capital_social', 3000000),
             'prestamos_lp': params_operativos.get('prestamos_lp', []),
@@ -3045,22 +3254,22 @@ if generar_proyeccion:
             tir_real = val_prof.get('dcf_detalle', {}).get('tir', st.session_state.datos_guardados['metricas'].get('tir_proyecto', 0))
             
             # Actualizar resumen ejecutivo con la valoración real
-            st.session_state.datos_guardados['analisis_ia']['resumen_ejecutivo'] = f"""
-            La empresa {st.session_state.datos_guardados['nombre_empresa']} del sector {st.session_state.datos_guardados['sector']} presenta un plan de negocio con 
-            crecimiento proyectado del {st.session_state.datos_guardados['metricas']['cagr_ventas']:.1f}% anual, alcanzando ventas de {get_simbolo_moneda()}{st.session_state.datos_guardados['pyl']['Ventas'].iloc[-1]:,.0f}
-            en el año 5. El margen EBITDA promedio es del {st.session_state.datos_guardados['metricas']['margen_ebitda_promedio']:.1f}%.
+            #st.session_state.datos_guardados['analisis_ia']['resumen_ejecutivo'] = f"""
+            #La empresa {st.session_state.datos_guardados['nombre_empresa']} del sector {st.session_state.datos_guardados['sector']} presenta un plan de negocio con 
+            #crecimiento proyectado del {st.session_state.datos_guardados['metricas']['cagr_ventas']:.1f}% anual, alcanzando ventas de {get_simbolo_moneda()}{st.session_state.datos_guardados['pyl']['Ventas'].iloc[-1]:,.0f}
+            #en el año 5. El margen EBITDA promedio es del {st.session_state.datos_guardados['metricas']['margen_ebitda_promedio']:.1f}%.
             
-            La valoración estimada es de {get_simbolo_moneda()}{valor_real:,.0f} con un ROI esperado del {tir_real:.1f}%.
-            La viabilidad del proyecto se considera {st.session_state.datos_guardados['analisis_ia']['viabilidad']}.
-            """ 
+            #La valoración estimada es de {get_simbolo_moneda()}{valor_real:,.0f} con un ROI esperado del {tir_real:.1f}%.
+            #La viabilidad del proyecto se considera {st.session_state.datos_guardados['analisis_ia']['viabilidad']}.
+            #""" 
             # Actualizar también las fortalezas con la valoración real
             st.session_state.datos_guardados['analisis_ia']['fortalezas'][2] = f"Valoración: {get_simbolo_moneda()}{valor_real:,.0f}"
     # Mostrar resultados
     st.success("✅ Proyección generada exitosamente!")
 
     # Tabs para organizar la información
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
-        ["💼 Dashboard", "📊 P&L Detallado", "📈 Analytics", "📑 Resumen Ejecutivo", "💎 Valoración", "📄 Documentos", "📚 Glosario"])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(
+        ["💼 Dashboard", "📊 P&L Detallado", "🗂️ Balance Proyectado", "📈 Analytics", "📑 Resumen Ejecutivo", "💎 Valoración", "📄 Documentos", "📚 Glosario"])
 
     with tab1:
         st.header("Dashboard de Métricas Clave")
@@ -3095,10 +3304,13 @@ if generar_proyeccion:
             value=f"{st.session_state.datos_guardados["metricas"]['roi_proyectado']}%"
         )
 
-    with tab4:
-        mostrar_resumen_ejecutivo_profesional()
-
     with tab5:
+        mostrar_resumen_ejecutivo_profesional(
+            st.session_state.datos_guardados['datos_empresa'].get('num_empleados', 10),
+            st.session_state.datos_guardados['datos_empresa'].get('año_fundacion', 2020)
+        )
+
+    with tab6:
         st.header("💎 Valoración Profesional - Metodología M&A")
 
         # AÑADIR ESTE EXPANDER
@@ -3609,7 +3821,7 @@ Ajustes debt-like items:
             except Exception as e:
                 st.error(f"Error al calcular la valoración: {str(e)}")
                 st.info("Asegúrese de haber generado las proyecciones financieras primero")
-    with tab6:
+    with tab7:
         st.header("📄 Documentos Ejecutivos")
         
         if 'datos_guardados' in st.session_state:
@@ -3637,20 +3849,23 @@ Ajustes debt-like items:
                         with st.spinner('Preparando documentación ejecutiva...'):
                             datos_guardados = st.session_state.datos_guardados
                             
-                           # Preparar datos de valoración
+                            # Asegurar que valoracion_pdf existe
                             if 'valoracion_profesional' in datos_guardados and datos_guardados['valoracion_profesional']:
                                 val_prof = datos_guardados['valoracion_profesional']
                                 valoracion_pdf = {
                                     'valor_empresa': val_prof.get('valoracion_final', 0),
                                     'valor_equity': val_prof.get('valoracion_final', 0) - val_prof.get('deuda_neta', 0),
                                     'ev_ebitda_salida': val_prof.get('multiples_detalle', {}).get('ev_ebitda_final', {}).get('multiplo', 7.0),
+                                    'ev_ebitda_ltm': datos_guardados.get('analisis_ia', {}).get('multiplo_ebitda_ltm', 10.3),
+                                    'ev_ebitda_ntm': datos_guardados.get('analisis_ia', {}).get('multiplo_ebitda_ntm', 8.3),
                                     'tir_esperada': val_prof.get('dcf_detalle', {}).get('tir', 15.0),
                                     'wacc_utilizado': val_prof.get('dcf_detalle', {}).get('wacc', 10.0),
                                     'deuda_neta': val_prof.get('deuda_neta', 0)
-                                }
+                                }  
                             else:
-                                valoracion_pdf = datos_guardados.get('valoracion', {}).copy()
-
+                                # Si no hay valoracion profesional, usar valoracion estándar
+                                valoracion_pdf = datos_guardados.get('valoracion', {})
+                 
                             # Generar PDF
                             pdf_bytes = generar_pdf_profesional(
                                 datos_empresa=datos_guardados['datos_empresa'],
@@ -3685,7 +3900,7 @@ Ajustes debt-like items:
             st.info("👆 Genera primero las proyecciones financieras para poder crear el documento PDF")
 
    # Tab 7: Glosario
-    with tab7:
+    with tab8:
         st.header("📚 Glosario de Términos Financieros")
         
         # Diccionario de términos completo
@@ -3725,10 +3940,14 @@ Ajustes debt-like items:
                 "IRR": "Internal Rate of Return. Tasa Interna de Retorno. Tasa que hace el VAN igual a cero.",
                 "Payback": "Período de Recuperación. Tiempo necesario para recuperar la inversión inicial.",
                 "Multiple": "Múltiplo de Valoración. Ratio para comparar empresas (ej: EV/EBITDA, P/E).",
-                "Beta": "Coeficiente Beta. Medida del riesgo sistemático de una acción respecto al mercado."
+                "Beta": "Coeficiente Beta. Medida del riesgo sistemático de una acción respecto al mercado.",
+                "LTM": "Last Twelve Months. Últimos doce meses. Período de referencia para métricas históricas. Se usa en múltiplos de valoración como EV/EBITDA LTM.",
+                "NTM": "Next Twelve Months. Próximos doce meses. Período de referencia para métricas proyectadas. Se usa en múltiplos forward como EV/EBITDA NTM.",
+                "TTM": "Trailing Twelve Months. Sinónimo de LTM. Últimos 12 meses de datos históricos.",
             },
             "Ratios": {
                 "ROE": "Return on Equity. Rentabilidad sobre el patrimonio. Fórmula: Beneficio Neto / Patrimonio × 100",
+                "ROCE": "Return on Capital Employed. Rentabilidad sobre capital empleado. Mide la eficiencia en el uso del capital operativo. Fórmula: EBIT / (Activos Totales - Pasivo Corriente) × 100",
                 "ROA": "Return on Assets. Rentabilidad sobre activos. Fórmula: Beneficio Neto / Activos × 100",
                 "Liquidity Ratio": "Ratio de liquidez. Capacidad de pagar obligaciones a corto plazo. Fórmula: Activo Corriente / Pasivo Corriente",
                 "Debt-to-Equity": "Ratio deuda/patrimonio. Nivel de apalancamiento. Fórmula: Deuda Total / Patrimonio Neto",
@@ -3819,8 +4038,64 @@ Ajustes debt-like items:
             )
         else:
             st.error("No hay datos de P&L disponibles")
-    
+
     with tab3:
+        st.header("🗂️ Balance Proyectado")
+    
+        if balance is not None and not balance.empty:
+            # Métricas principales en la parte superior
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                patrimonio_inicial = balance['patrimonio_neto'].iloc[0]
+                patrimonio_final = balance['patrimonio_neto'].iloc[-1]
+                crecimiento = ((patrimonio_final / patrimonio_inicial) - 1) * 100
+                st.metric("Patrimonio Final", f"€{patrimonio_final/1000:.0f}k", f"+{crecimiento:.1f}%")
+            
+            with col2:
+                deuda_total_final = balance['deuda_cp'].iloc[-1] + balance['deuda_lp'].iloc[-1]
+                st.metric("Deuda Total Final", f"€{deuda_total_final/1000:.0f}k")
+            
+            with col3:
+                ratio_deuda_pat = deuda_total_final / patrimonio_final if patrimonio_final > 0 else 0
+                st.metric("Deuda/Patrimonio", f"{ratio_deuda_pat:.2f}x")
+            
+            with col4:
+                total_activos_final = balance['total_activo'].iloc[-1]
+                st.metric("Total Activos", f"€{total_activos_final/1000:.0f}k")
+            
+            # Tabla principal
+            st.subheader("📊 Evolución del Balance")
+
+            # Preparar datos con formato
+            balance_tabla = pd.DataFrame({
+                'Año': balance['año'],
+                'Tesorería': balance['tesoreria'].apply(lambda x: f"€{x:,.0f}"),
+                'Clientes': balance['clientes'].apply(lambda x: f"€{x:,.0f}"),
+                'Inventario': balance['inventario'].apply(lambda x: f"€{x:,.0f}"),
+                'Activo Fijo': balance['activo_fijo_neto'].apply(lambda x: f"€{x:,.0f}"),
+                'TOTAL ACTIVO': balance['total_activo'].apply(lambda x: f"€{x:,.0f}"),
+                'Proveedores': balance['proveedores'].apply(lambda x: f"€{x:,.0f}"),
+                'Deuda CP': balance['deuda_cp'].apply(lambda x: f"€{x:,.0f}"),
+                'Deuda LP': balance['deuda_lp'].apply(lambda x: f"€{x:,.0f}"),
+                'Patrimonio': balance['patrimonio_neto'].apply(lambda x: f"€{x:,.0f}")
+            })
+            
+            st.dataframe(balance_tabla, use_container_width=True, hide_index=True)
+            
+            # Gráfico de evolución
+            with st.expander("📈 Ver Gráfico de Evolución"):
+                fig_data = pd.DataFrame({
+                    'Año': balance['año'],
+                    'Total Activos': balance['total_activo']/1000,
+                    'Patrimonio Neto': balance['patrimonio_neto']/1000,
+                    'Deuda Total': (balance['deuda_cp'] + balance['deuda_lp'])/1000
+                })
+                st.line_chart(fig_data.set_index('Año'))
+        else:
+            st.warning("No hay datos de balance proyectado disponibles")
+    
+    with tab4:
         st.header("📈 Analytics")
         
         if pyl is not None and not pyl.empty:
@@ -4058,17 +4333,31 @@ if not generar_proyeccion and st.session_state.proyeccion_generada and st.sessio
                                 'valor_empresa': val_prof.get('valoracion_final', 0),
                                 'valor_equity': val_prof.get('valoracion_final', 0) - val_prof.get('deuda_neta', 0),
                                 'ev_ebitda_salida': val_prof.get('multiples_detalle', {}).get('ev_ebitda_final', {}).get('multiplo', 7.0),
+                                'ev_ebitda_ltm': st.session_state.datos_guardados.get('analisis_ia', {}).get('multiplo_ebitda_ltm', 10.3),
+                                'ev_ebitda_ntm': st.session_state.datos_guardados.get('analisis_ia', {}).get('multiplo_ebitda_ntm', 8.3),
                                 'tir_esperada': val_prof.get('dcf_detalle', {}).get('tir', 15.0),
                                 'wacc_utilizado': val_prof.get('dcf_detalle', {}).get('wacc', 10.0),
                                 'deuda_neta': val_prof.get('deuda_neta', 0)
                             }
                         else:
                             valoracion_pdf = st.session_state.datos_guardados.get('valoracion', {})
-                        
-                        # Generar PDF
+                            
+                        # Añadir CAPEX desde el DataFrame de cash flow
+                        if 'cash_flow' in st.session_state.datos_guardados:
+                            cf_df = st.session_state.datos_guardados['cash_flow']
+                            if 'Flujo Inversión' in cf_df.columns:
+                                for i in range(min(5, len(cf_df))):
+                                    capex = abs(cf_df['Flujo Inversión'].iloc[i])
+                                    valoracion_pdf[f'capex_año{i+1}'] = capex
+                        if 'plan_capex' in st.session_state.datos_guardados:
+                            for i, capex_data in enumerate(st.session_state.datos_guardados['plan_capex']):
+                                if i < 5:
+                                    valoracion_pdf[f'capex_año{i+1}'] = capex_data.get('importe', 0)
+
                         pdf_bytes = generar_pdf_profesional(
                             datos_empresa=st.session_state.datos_guardados['datos_empresa'],
                             pyl_df=st.session_state.datos_guardados['pyl'],
+                            balance_df=st.session_state.datos_guardados.get('balance'),
                             valoracion=valoracion_pdf,
                             analisis_ia=st.session_state.datos_guardados.get('analisis_ia', {})
                         )

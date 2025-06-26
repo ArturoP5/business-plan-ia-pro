@@ -381,8 +381,15 @@ class ModeloFinanciero:
             otros_gastos_calc = self.otros_gastos * inflacion_acum if hasattr(self, 'otros_gastos') else 0
 
             # Total otros gastos
-            otros_gastos = gastos_generales + gastos_marketing
-            
+            otros_gastos = gastos_generales + gastos_marketing + otros_gastos_calc
+            # Debug de gastos
+            print(f"\n=== DEBUG GASTOS AÑO {año} ===")
+            print(f"Gastos personal inicial: {self.gastos_personal:,.0f}")
+            print(f"Gastos personal ajustado: {gastos_personal:,.0f}")
+            print(f"Gastos generales: {gastos_generales:,.0f}")
+            print(f"Gastos marketing: {gastos_marketing:,.0f}")
+            print(f"Otros gastos calc: {otros_gastos_calc:,.0f}")
+            print(f"Total otros gastos: {otros_gastos:,.0f}")
             # Calcular EBITDA correctamente para todos los años
             # Calcular EBITDA = Ventas - Costos - Gastos
             ebitda = ingresos - coste_ventas - gastos_personal - otros_gastos
@@ -680,16 +687,7 @@ class ModeloFinanciero:
             margen_neto = beneficio_neto / ingresos * 100
             roe = beneficio_neto / patrimonio_neto * 100 if patrimonio_neto > 0 else 0
             roa = beneficio_neto / total_activo * 100
-
-            # Obtener EBIT del P&L
-            ebit = self.pyl[self.pyl['año'] == año]['ebit'].values[0]
-
-            # ROCE (Return on Capital Employed)
-            pasivo_corriente = (self.balance[self.balance['año'] == año]['deuda_cp'].values[0] +
-                               self.balance[self.balance['año'] == año]['proveedores'].values[0])
-            capital_empleado = total_activo - pasivo_corriente
-            roce = ebit / capital_empleado * 100 if capital_empleado > 0 else 0
-
+            
             # Ratios de solvencia
             ratio_endeudamiento = deuda_total / patrimonio_neto if patrimonio_neto > 0 else 999
             ratio_cobertura_intereses = ebitda / self.pyl[self.pyl['año'] == año]['gastos_financieros'].values[0] if self.pyl[self.pyl['año'] == año]['gastos_financieros'].values[0] > 0 else 999
@@ -710,7 +708,6 @@ class ModeloFinanciero:
                 'margen_neto_%': margen_neto,
                 'roe_%': roe,
                 'roa_%': roa,
-                'roce_%': roce,
                 'ratio_endeudamiento': ratio_endeudamiento,
                 'cobertura_intereses': ratio_cobertura_intereses,
                 'deuda_neta_ebitda': deuda_neta_ebitda,
